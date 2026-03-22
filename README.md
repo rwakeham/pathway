@@ -12,30 +12,21 @@ A self-hosted navigation dashboard for your home server or Docker environment. P
 
 ## Quick start
 
-```yaml
-# docker-compose.yml
-services:
-  pathway:
-    image: pathway
-    ports:
-      - "80:80"
-    volumes:
-      - ./data:/app/data
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    restart: unless-stopped
-```
+Clone the repo and run the start script — it will prompt for your host's LAN IP on first run, then start the container:
 
 ```bash
-docker compose up -d
+./start.sh
 ```
 
 Open `http://<host>` in your browser. On first visit you will be prompted to set an admin password.
+
+The LAN IP is saved to `.env` so subsequent starts pick it up automatically. To change it, edit `.env` and update `HOST_IP`.
 
 ## Managing the container
 
 | Action | Command |
 |---|---|
-| Start | `docker compose up -d` |
+| Start | `./start.sh` |
 | Stop | `docker compose down` |
 | Restart | `docker compose restart pathway` |
 | View logs | `docker compose logs -f pathway` |
@@ -51,7 +42,7 @@ sudo systemctl enable docker
 sudo systemctl is-enabled docker
 ```
 
-If you ever stop the container intentionally with `docker compose down`, it will not restart until you run `docker compose up -d` again.
+If you ever stop the container intentionally with `docker compose down`, it will not restart until you run `./start.sh` or `docker compose up -d` again.
 
 ## Building from source
 
@@ -105,7 +96,7 @@ The `COMPOSE_SERVICE_NAME` environment variable controls which container name is
 | Variable | Default | Description |
 |---|---|---|
 | `COMPOSE_SERVICE_NAME` | `pathway` | Container name to skip during auto-discovery |
-| `HOST_IP` | *(auto)* | IP used when Docker reports `0.0.0.0` for a port binding. Set this to the LAN IP your browser uses to reach the host if auto-detected URLs are wrong. |
+| `HOST_IP` | *(required)* | LAN IP of the Docker host. Used to build URLs for containers that bind to `0.0.0.0`. Set automatically by `./start.sh` and stored in `.env`. |
 
 ## Admin panel
 
