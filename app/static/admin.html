@@ -172,6 +172,13 @@
           <p class="mt-1 text-xs text-slate-500">Probed every 30s. Any HTTP response = healthy. Leave blank to use Docker status only.</p>
         </div>
         <div>
+          <label class="block text-sm text-slate-400 mb-1">Response pattern
+            <span class="ml-1 text-slate-500 font-normal">(optional regex)</span>
+          </label>
+          <input type="text" id="edit-health-check-pattern" placeholder='e.g. "status"\s*:\s*"ok"' />
+          <p class="mt-1 text-xs text-slate-500">If set, the response body must match this regex to count as healthy.</p>
+        </div>
+        <div>
           <label class="block text-sm text-slate-400 mb-1">Icon (image)</label>
           <input type="file" id="edit-icon" accept="image/*" class="file:mr-3 file:btn file:bg-slate-700 file:text-slate-200 file:border-0 file:rounded file:px-3 file:py-1 file:cursor-pointer" />
           <div id="edit-icon-preview" class="mt-2 hidden">
@@ -279,6 +286,13 @@
               </label>
               <input type="url" name="health_check_url" placeholder="e.g. http://server:32400/identity" />
               <p class="mt-1 text-xs text-slate-500">Probed every 30s — any HTTP response counts as healthy. Leave blank to rely on Docker status.</p>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-400 mb-1">Response pattern
+                <span class="ml-1 text-slate-500 font-normal">(optional regex)</span>
+              </label>
+              <input type="text" name="health_check_pattern" placeholder='e.g. "status"\s*:\s*"ok"' />
+              <p class="mt-1 text-xs text-slate-500">If set, the response body must match this regex to count as healthy.</p>
             </div>
             <div>
               <label class="block text-sm text-slate-400 mb-1">Icon</label>

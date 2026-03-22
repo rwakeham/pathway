@@ -369,6 +369,7 @@ function openEditModal(id) {
   document.getElementById('edit-url').value = svc.url;
   document.getElementById('edit-description').value = svc.description || '';
   document.getElementById('edit-health-check-url').value = svc.health_check_url || '';
+  document.getElementById('edit-health-check-pattern').value = svc.health_check_pattern || '';
   document.getElementById('edit-enabled').checked = svc.enabled !== false;
 
   const preview = document.getElementById('edit-icon-preview');
@@ -399,6 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fd.append('url', document.getElementById('edit-url').value);
       fd.append('description', document.getElementById('edit-description').value);
       fd.append('health_check_url', document.getElementById('edit-health-check-url').value);
+      fd.append('health_check_pattern', document.getElementById('edit-health-check-pattern').value);
       fd.append('enabled', document.getElementById('edit-enabled').checked ? 'true' : 'false');
 
       const iconFile = document.getElementById('edit-icon').files[0];

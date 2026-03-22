@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import re
 
 import httpx
 
@@ -21,26 +22,37 @@ def get_all_statuses() -> dict[str, str]:
     return dict(_cache)
 
 
-async def _probe(url: str) -> bool:
-    """Returns True if the URL responds with any HTTP reply (connection success)."""
+async def _probe(url: str, pattern: str | None) -> bool:
+    """
+    Returns True if the URL is reachable.
+    If pattern is set, also requires the response body to match (re.search).
+    """
     try:
         async with httpx.AsyncClient(verify=False, follow_redirects=True) as client:
             resp = await client.get(url, timeout=PROBE_TIMEOUT)
-            # Accept any HTTP response — a 401/403 still means the service is up
-            return True
+            if pattern:
+                return bool(re.search(pattern, resp.text))
+            return True  # any HTTP reply = up
     except Exception:
         return False
 
 
 async def poll_health_checks(services: list[dict]):
     """Probe all services that have a health_check_url and update the cache."""
-    targets = [(s["id"], s["health_check_url"]) for s in services if s.get("health_check_url")]
+    targets = [
+        (s["id"], s["health_check_url"], s.get("health_check_pattern"))
+        for s in services
+        if s.get("health_check_url")
+    ]
     if not targets:
         return
 
-    results = await asyncio.gather(*(_probe(url) for _, url in targets), return_exceptions=True)
+    results = await asyncio.gather(
+        *(_probe(url, pattern) for _, url, pattern in targets),
+        return_exceptions=True,
+    )
 
-    for (sid, _url), result in zip(targets, results):
+    for (sid, _url, _pat), result in zip(targets, results):
         if isinstance(result, Exception):
             log.warning("Health probe exception for %s: %s", sid, result)
             _cache[sid] = "unhealthy"

@@ -218,6 +218,7 @@ async def create_service(
     description: str = Form(""),
     enabled: bool = Form(True),
     health_check_url: str = Form(""),
+    health_check_pattern: str = Form(""),
     icon: Optional[UploadFile] = File(default=None),
 ):
     cfg = load_config()
@@ -229,6 +230,7 @@ async def create_service(
         enabled=enabled,
         order=max_order + 1,
         health_check_url=health_check_url.strip() or None,
+        health_check_pattern=health_check_pattern.strip() or None,
     )
 
     if icon and icon.filename:
@@ -249,6 +251,7 @@ async def update_service(
     enabled: Optional[bool] = Form(default=None),
     order: Optional[int] = Form(default=None),
     health_check_url: Optional[str] = Form(default=None),
+    health_check_pattern: Optional[str] = Form(default=None),
     icon: Optional[UploadFile] = File(default=None),
 ):
     cfg = load_config()
@@ -268,6 +271,8 @@ async def update_service(
         svc["order"] = order
     if health_check_url is not None:
         svc["health_check_url"] = health_check_url.strip() or None
+    if health_check_pattern is not None:
+        svc["health_check_pattern"] = health_check_pattern.strip() or None
 
     if icon and icon.filename:
         # Remove old icon if exists
