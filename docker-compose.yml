@@ -6,8 +6,6 @@ services:
     volumes:
       - ./data:/app/data
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      # Set this if auto-detected URLs use the wrong IP (e.g. 0.0.0.0 or the Docker gateway).
-      # Use the IP your browser uses to reach this host.
-      # HOST_IP: 192.168.1.100
+    # environment:
+    #   HOST_IP: 192.168.1.100  # Set if auto-detected URLs use the wrong IP (e.g. 0.0.0.0)
     restart: unless-stopped
