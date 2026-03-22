@@ -83,6 +83,7 @@ The `COMPOSE_SERVICE_NAME` environment variable controls which container name is
 | Variable | Default | Description |
 |---|---|---|
 | `COMPOSE_SERVICE_NAME` | `pathway` | Container name to skip during auto-discovery |
+| `HOST_IP` | *(auto)* | IP used when Docker reports `0.0.0.0` for a port binding. Set this to the LAN IP your browser uses to reach the host if auto-detected URLs are wrong. |
 
 ## Admin panel
 

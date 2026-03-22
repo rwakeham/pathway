@@ -15,9 +15,18 @@ _OWN_SERVICE = os.environ.get("COMPOSE_SERVICE_NAME", "pathway")
 
 
 def _host_ip() -> str:
-    """Best-effort guess at the Docker host IP visible from within the container."""
+    """
+    Return the IP to use when Docker binds a port to 0.0.0.0.
+
+    Resolution order:
+    1. HOST_IP environment variable (most reliable — set this if auto-detection is wrong)
+    2. Default-route gateway from /proc/net/route (works inside Docker bridge networks)
+    3. "localhost" as a last resort
+    """
+    explicit = os.environ.get("HOST_IP", "").strip()
+    if explicit:
+        return explicit
     try:
-        # When running inside Docker, the gateway is usually the host
         with open("/proc/net/route") as f:
             for line in f.readlines()[1:]:
                 fields = line.strip().split()
@@ -68,8 +77,8 @@ def _container_name(container) -> str:
     return labels.get("com.docker.compose.service") or container.name.lstrip("/")
 
 
-def _published_ports(container) -> list[int]:
-    """Return sorted list of host-side published ports for this container."""
+def _published_ports(container) -> list[tuple[str, int]]:
+    """Return sorted list of (host_ip, port) for each published port on this container."""
     ports = []
     try:
         port_bindings = container.ports or {}
@@ -81,10 +90,10 @@ def _published_ports(container) -> list[int]:
                 if host_port:
                     p = int(host_port)
                     if p not in _SKIP_PORTS:
-                        ports.append(p)
+                        ports.append((b.get("HostIp", "0.0.0.0"), p))
     except Exception:
         pass
-    return sorted(set(ports))
+    return sorted(set(ports), key=lambda x: x[1])
 
 
 def scan_containers() -> list[dict]:
@@ -93,7 +102,7 @@ def scan_containers() -> list[dict]:
     if client is None:
         return []
 
-    host = _host_ip()
+    fallback_ip = _host_ip()
     results = []
 
     try:
@@ -113,7 +122,9 @@ def scan_containers() -> list[dict]:
             if not ports:
                 continue
 
-            primary_port = ports[0]
+            binding_ip, primary_port = ports[0]
+            # 0.0.0.0 means "all interfaces" — use our detected/configured host IP
+            host = fallback_ip if binding_ip in ("0.0.0.0", "") else binding_ip
             url = f"http://{host}:{primary_port}"
 
             results.append(
