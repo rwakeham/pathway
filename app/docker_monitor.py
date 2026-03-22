@@ -2,7 +2,6 @@
 
 import logging
 import os
-import socket
 from typing import Optional
 
 log = logging.getLogger(__name__)
@@ -15,27 +14,16 @@ _OWN_SERVICE = os.environ.get("COMPOSE_SERVICE_NAME", "pathway")
 
 
 def _host_ip() -> str:
-    """
-    Return the IP to use when Docker binds a port to 0.0.0.0.
-
-    Resolution order:
-    1. HOST_IP environment variable (most reliable — set this if auto-detection is wrong)
-    2. Default-route gateway from /proc/net/route (works inside Docker bridge networks)
-    3. "localhost" as a last resort
-    """
-    explicit = os.environ.get("HOST_IP", "").strip()
-    if explicit:
-        return explicit
-    try:
-        with open("/proc/net/route") as f:
-            for line in f.readlines()[1:]:
-                fields = line.strip().split()
-                if fields[1] == "00000000":  # default route
-                    gateway = int(fields[2], 16)
-                    return socket.inet_ntoa(gateway.to_bytes(4, "little"))
-    except Exception:
-        pass
-    return "localhost"
+    """Return the HOST_IP environment variable, or log an error if not set."""
+    ip = os.environ.get("HOST_IP", "").strip()
+    if not ip:
+        log.error(
+            "HOST_IP environment variable is not set. "
+            "Container URLs using 0.0.0.0 bindings will be incorrect. "
+            "Set HOST_IP to the LAN IP of the Docker host."
+        )
+        return "localhost"
+    return ip
 
 
 def _get_docker_client():
