@@ -31,6 +31,28 @@ docker compose up -d
 
 Open `http://<host>` in your browser. On first visit you will be prompted to set an admin password.
 
+## Managing the container
+
+| Action | Command |
+|---|---|
+| Start | `docker compose up -d` |
+| Stop | `docker compose down` |
+| Restart | `docker compose restart pathway` |
+| View logs | `docker compose logs -f pathway` |
+| Rebuild after code changes | `docker compose up -d --build` |
+
+The compose file sets `restart: unless-stopped`, so Pathway will start automatically when Docker starts. To ensure Docker itself starts on boot:
+
+```bash
+# systemd-based systems (Ubuntu, Debian, Fedora, etc.)
+sudo systemctl enable docker
+
+# Verify it's enabled
+sudo systemctl is-enabled docker
+```
+
+If you ever stop the container intentionally with `docker compose down`, it will not restart until you run `docker compose up -d` again.
+
 ## Building from source
 
 ```bash
