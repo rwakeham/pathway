@@ -46,6 +46,7 @@ from .config_store import (
     upsert_service,
 )
 from .docker_monitor import get_container_statuses, scan_containers
+from .health_checker import get_all_statuses, poll_health_checks
 
 log = logging.getLogger(__name__)
 
@@ -71,8 +72,9 @@ async def _poll_docker():
             cfg = load_config()
             merge_auto_detected(cfg, detected)
             save_config(cfg)
+            await poll_health_checks(get_services(cfg))
         except Exception as e:
-            log.error("Docker poll error: %s", e)
+            log.error("Poll error: %s", e)
         await asyncio.sleep(POLL_INTERVAL)
 
 
@@ -170,6 +172,12 @@ async def list_services():
             if svc.get("container_name"):
                 svc["_docker_status"] = statuses.get(svc["container_name"], "unknown")
 
+    # Enrich with HTTP health check results
+    health_statuses = get_all_statuses()
+    for svc in enabled:
+        if svc.get("health_check_url"):
+            svc["_health_status"] = health_statuses.get(svc["id"], "pending")
+
     enabled.sort(key=lambda s: s.get("order", 0))
     return enabled
 
@@ -193,6 +201,11 @@ async def admin_list_services(_: AuthDep):
             if svc.get("container_name"):
                 svc["_docker_status"] = statuses.get(svc["container_name"], "unknown")
 
+    health_statuses = get_all_statuses()
+    for svc in services:
+        if svc.get("health_check_url"):
+            svc["_health_status"] = health_statuses.get(svc["id"], "pending")
+
     services.sort(key=lambda s: s.get("order", 0))
     return services
 
@@ -204,11 +217,19 @@ async def create_service(
     url: str = Form(...),
     description: str = Form(""),
     enabled: bool = Form(True),
+    health_check_url: str = Form(""),
     icon: Optional[UploadFile] = File(default=None),
 ):
     cfg = load_config()
     max_order = max((s.get("order", 0) for s in cfg.get("services", [])), default=-1)
-    svc = new_service(name=name, url=url, description=description, enabled=enabled, order=max_order + 1)
+    svc = new_service(
+        name=name,
+        url=url,
+        description=description,
+        enabled=enabled,
+        order=max_order + 1,
+        health_check_url=health_check_url.strip() or None,
+    )
 
     if icon and icon.filename:
         svc["icon_filename"] = await _save_icon(svc["id"], icon)
@@ -227,6 +248,7 @@ async def update_service(
     description: Optional[str] = Form(default=None),
     enabled: Optional[bool] = Form(default=None),
     order: Optional[int] = Form(default=None),
+    health_check_url: Optional[str] = Form(default=None),
     icon: Optional[UploadFile] = File(default=None),
 ):
     cfg = load_config()
@@ -244,6 +266,8 @@ async def update_service(
         svc["enabled"] = enabled
     if order is not None:
         svc["order"] = order
+    if health_check_url is not None:
+        svc["health_check_url"] = health_check_url.strip() or None
 
     if icon and icon.filename:
         # Remove old icon if exists

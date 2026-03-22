@@ -165,6 +165,13 @@
           <input type="text" id="edit-description" />
         </div>
         <div>
+          <label class="block text-sm text-slate-400 mb-1">Health Check URL
+            <span class="ml-1 text-slate-500 font-normal">(optional)</span>
+          </label>
+          <input type="url" id="edit-health-check-url" placeholder="http://host:port/health" />
+          <p class="mt-1 text-xs text-slate-500">Probed every 30s. Any HTTP response = healthy. Leave blank to use Docker status only.</p>
+        </div>
+        <div>
           <label class="block text-sm text-slate-400 mb-1">Icon (image)</label>
           <input type="file" id="edit-icon" accept="image/*" class="file:mr-3 file:btn file:bg-slate-700 file:text-slate-200 file:border-0 file:rounded file:px-3 file:py-1 file:cursor-pointer" />
           <div id="edit-icon-preview" class="mt-2 hidden">
@@ -230,7 +237,7 @@
                 <th class="px-4 py-3 font-medium">Service</th>
                 <th class="px-4 py-3 font-medium">URL</th>
                 <th class="px-4 py-3 font-medium">Source</th>
-                <th class="px-4 py-3 font-medium">Status</th>
+                <th class="px-4 py-3 font-medium">Health</th>
                 <th class="px-4 py-3 font-medium">Enabled</th>
                 <th class="px-4 py-3 font-medium"></th>
               </tr>
@@ -265,6 +272,13 @@
             <div>
               <label class="block text-sm text-slate-400 mb-1">Description</label>
               <input type="text" name="description" placeholder="Optional description" />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm text-slate-400 mb-1">Health Check URL
+                <span class="ml-1 text-slate-500 font-normal">(optional)</span>
+              </label>
+              <input type="url" name="health_check_url" placeholder="e.g. http://server:32400/identity" />
+              <p class="mt-1 text-xs text-slate-500">Probed every 30s — any HTTP response counts as healthy. Leave blank to rely on Docker status.</p>
             </div>
             <div>
               <label class="block text-sm text-slate-400 mb-1">Icon</label>

@@ -72,6 +72,7 @@ def new_service(
     container_name: Optional[str] = None,
     enabled: bool = True,
     order: int = 0,
+    health_check_url: Optional[str] = None,
 ) -> dict:
     return {
         "id": str(uuid.uuid4()),
@@ -83,6 +84,7 @@ def new_service(
         "source": source,
         "container_name": container_name,
         "order": order,
+        "health_check_url": health_check_url,
     }
 
 

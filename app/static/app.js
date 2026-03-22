@@ -4,17 +4,25 @@
 // Utilities
 // ---------------------------------------------------------------------------
 
-function statusClass(status) {
-  if (status === 'running') return 'status-running';
-  if (status === 'stopped') return 'status-stopped';
-  return 'status-unknown';
+/**
+ * Resolve the canonical status and display label for a service.
+ * Priority: HTTP health check (if configured) > Docker status > unknown.
+ */
+function resolveStatus(svc) {
+  if (svc.health_check_url) {
+    const hs = svc._health_status || 'pending';
+    return { status: hs, label: hs, source: 'http' };
+  }
+  const ds = svc._docker_status;
+  if (ds) return { status: ds, label: ds, source: 'docker' };
+  if (svc.source === 'manual') return { status: 'unknown', label: 'manual', source: 'none' };
+  return { status: 'unknown', label: 'unknown', source: 'none' };
 }
 
-function statusLabel(status, source) {
-  if (source === 'manual') return 'manual';
-  if (status === 'running') return 'running';
-  if (status === 'stopped') return 'stopped';
-  return 'unknown';
+function statusClass(status) {
+  if (status === 'running' || status === 'healthy') return 'status-running';
+  if (status === 'stopped' || status === 'unhealthy') return 'status-stopped';
+  return 'status-unknown';
 }
 
 function initials(name) {
@@ -95,9 +103,8 @@ function renderTiles(services) {
   empty.classList.remove('flex');
 
   grid.innerHTML = services.map(svc => {
-    const status = svc._docker_status || (svc.source === 'manual' ? 'manual' : 'unknown');
+    const { status, label } = resolveStatus(svc);
     const dotClass = statusClass(status);
-    const label = statusLabel(status, svc.source);
     const colour = tileColour(svc.name);
     const iconHtml = svc.icon_filename
       ? `<img src="/icons/${encodeURIComponent(svc.icon_filename)}" alt="${escHtml(svc.name)}"
@@ -221,7 +228,7 @@ function renderServicesTable(services) {
   }
 
   tbody.innerHTML = services.map(svc => {
-    const status = svc._docker_status || (svc.source === 'manual' ? 'manual' : 'unknown');
+    const { status, label, source: statusSource } = resolveStatus(svc);
     const dotClass = statusClass(status);
     const colour = tileColour(svc.name);
     const iconHtml = svc.icon_filename
@@ -251,7 +258,8 @@ function renderServicesTable(services) {
         <td class="px-4 py-3">
           <div class="flex items-center gap-1.5">
             <span class="status-dot ${dotClass}"></span>
-            <span class="text-xs text-slate-400">${status}</span>
+            <span class="text-xs text-slate-400">${label}</span>
+            ${statusSource === 'http' ? '<span class="text-xs px-1.5 py-0.5 rounded bg-indigo-900/60 text-indigo-300 font-mono">http</span>' : ''}
           </div>
         </td>
         <td class="px-4 py-3">
@@ -360,6 +368,7 @@ function openEditModal(id) {
   document.getElementById('edit-name').value = svc.name;
   document.getElementById('edit-url').value = svc.url;
   document.getElementById('edit-description').value = svc.description || '';
+  document.getElementById('edit-health-check-url').value = svc.health_check_url || '';
   document.getElementById('edit-enabled').checked = svc.enabled !== false;
 
   const preview = document.getElementById('edit-icon-preview');
@@ -389,6 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fd.append('name', document.getElementById('edit-name').value);
       fd.append('url', document.getElementById('edit-url').value);
       fd.append('description', document.getElementById('edit-description').value);
+      fd.append('health_check_url', document.getElementById('edit-health-check-url').value);
       fd.append('enabled', document.getElementById('edit-enabled').checked ? 'true' : 'false');
 
       const iconFile = document.getElementById('edit-icon').files[0];
