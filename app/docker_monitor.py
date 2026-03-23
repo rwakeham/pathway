@@ -112,7 +112,7 @@ def scan_containers() -> list[dict]:
 
             binding_ip, primary_port = ports[0]
             # 0.0.0.0 means "all interfaces" — use our detected/configured host IP
-            host = fallback_ip if binding_ip in ("0.0.0.0", "") else binding_ip
+            host = fallback_ip if binding_ip in ("0.0.0.0", "", "::") else binding_ip
             url = f"http://{host}:{primary_port}"
 
             results.append(
