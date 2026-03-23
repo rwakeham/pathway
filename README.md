@@ -82,6 +82,8 @@ Example patterns:
 
 Pathway connects to the Docker socket and lists running containers. Any container that exposes at least one published host port is added as a service. Containers without published ports, and Pathway itself, are ignored.
 
+Containers that bind to `0.0.0.0` or `::` (IPv6 wildcard) are treated as wildcard bindings; Pathway substitutes `HOST_IP` to build the service URL.
+
 The `COMPOSE_SERVICE_NAME` environment variable controls which container name is treated as "self" (defaults to `pathway`).
 
 ## Volumes
@@ -105,6 +107,6 @@ Navigate to `/admin`. Features:
 - Add services manually with a name, URL, description, icon, and health check settings
 - Edit or delete any service (auto-detected or manual)
 - Toggle services on/off without deleting them
-- Drag to reorder the dashboard grid
+- Reorder services via the edit form (order field)
 - Trigger an immediate Docker rescan
 - Change the admin password
