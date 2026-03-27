@@ -20,7 +20,7 @@ function resolveStatus(svc) {
 }
 
 function statusClass(status) {
-  if (status === 'running' || status === 'healthy') return 'status-running';
+  if (status === 'healthy') return 'status-running';
   if (status === 'stopped' || status === 'unhealthy') return 'status-stopped';
   return 'status-unknown';
 }
