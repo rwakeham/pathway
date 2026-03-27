@@ -107,6 +107,6 @@ Navigate to `/admin`. Features:
 - Add services manually with a name, URL, description, icon, and health check settings
 - Edit or delete any service (auto-detected or manual)
 - Toggle services on/off without deleting them
-- Reorder services via the edit form (order field)
+- Drag to reorder the dashboard grid
 - Trigger an immediate Docker rescan
 - Change the admin password

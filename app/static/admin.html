@@ -93,6 +93,11 @@
     .toast.show { opacity: 1; }
     .toast-success { background: #14532d; color: #86efac; border: 1px solid #166534; }
     .toast-error   { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; }
+
+    .drag-handle { cursor: grab; color: #475569; }
+    .drag-handle:hover { color: #94a3b8; }
+    tr.drag-over td { background: rgba(99,102,241,0.12); }
+    tr.dragging { opacity: 0.35; }
   </style>
 </head>
 <body class="min-h-screen text-slate-100 font-sans">
@@ -238,23 +243,26 @@
         </div>
 
         <div class="rounded-xl border border-slate-700 overflow-hidden">
+          <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-slate-700 bg-slate-800/60 text-slate-400 text-left">
+                <th class="px-2 py-3 w-8"></th>
                 <th class="px-4 py-3 font-medium">Service</th>
-                <th class="px-4 py-3 font-medium">URL</th>
-                <th class="px-4 py-3 font-medium">Source</th>
-                <th class="px-4 py-3 font-medium">Health</th>
+                <th class="px-4 py-3 font-medium hidden sm:table-cell">URL</th>
+                <th class="px-4 py-3 font-medium hidden sm:table-cell">Source</th>
+                <th class="px-4 py-3 font-medium hidden sm:table-cell">Health</th>
                 <th class="px-4 py-3 font-medium">Enabled</th>
                 <th class="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody id="services-table-body">
               <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading…</td>
+                <td colspan="7" class="px-4 py-8 text-center text-slate-500">Loading…</td>
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </section>
 

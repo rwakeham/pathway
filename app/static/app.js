@@ -20,7 +20,7 @@ function resolveStatus(svc) {
 }
 
 function statusClass(status) {
-  if (status === 'running' || status === 'healthy') return 'status-running';
+  if (status === 'healthy') return 'status-running';
   if (status === 'stopped' || status === 'unhealthy') return 'status-stopped';
   return 'status-unknown';
 }
@@ -143,6 +143,8 @@ function escHtml(str) {
 
 let _services = [];
 let _editingId = null;
+let _dragSrcId = null;
+let _dragOverRow = null;
 
 async function initAdmin() {
   const statusRes = await apiFetch('/api/auth/status');
@@ -209,6 +211,7 @@ function showAdminContent() {
   loadAdminServices();
   setupAddForm();
   setupPasswordForm();
+  setupDragToReorder();
 }
 
 async function loadAdminServices() {
@@ -223,7 +226,7 @@ async function loadAdminServices() {
 function renderServicesTable(services) {
   const tbody = document.getElementById('services-table-body');
   if (!services.length) {
-    tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No services yet — add one below or run a Docker scan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No services yet — add one below or run a Docker scan.</td></tr>`;
     return;
   }
 
@@ -237,7 +240,14 @@ function renderServicesTable(services) {
               style="background:${colour}">${escHtml(initials(svc.name))}</div>`;
 
     return `
-      <tr class="border-b border-slate-800 hover:bg-slate-800/40 transition-colors" data-id="${svc.id}">
+      <tr draggable="true" class="border-b border-slate-800 hover:bg-slate-800/40 transition-colors" data-id="${svc.id}">
+        <td class="drag-handle px-2 py-3 w-8 select-none">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+            <circle cx="5" cy="4" r="1.5"/><circle cx="11" cy="4" r="1.5"/>
+            <circle cx="5" cy="8" r="1.5"/><circle cx="11" cy="8" r="1.5"/>
+            <circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/>
+          </svg>
+        </td>
         <td class="px-4 py-3">
           <div class="flex items-center gap-3">
             ${iconHtml}
@@ -247,15 +257,15 @@ function renderServicesTable(services) {
             </div>
           </div>
         </td>
-        <td class="px-4 py-3 text-slate-300 font-mono text-xs max-w-xs truncate">
+        <td class="px-4 py-3 text-slate-300 font-mono text-xs max-w-xs truncate hidden sm:table-cell">
           <a href="${escHtml(svc.url)}" target="_blank" class="hover:text-indigo-400 transition-colors">${escHtml(svc.url)}</a>
         </td>
-        <td class="px-4 py-3">
+        <td class="px-4 py-3 hidden sm:table-cell">
           <span class="px-2 py-0.5 rounded text-xs font-medium ${svc.source === 'auto' ? 'badge-auto' : 'badge-manual'}">
             ${svc.source}
           </span>
         </td>
-        <td class="px-4 py-3">
+        <td class="px-4 py-3 hidden sm:table-cell">
           <div class="flex items-center gap-1.5">
             <span class="status-dot ${dotClass}"></span>
             <span class="text-xs text-slate-400">${label}</span>
@@ -306,6 +316,77 @@ async function deleteService(id, name) {
     loadAdminServices();
   } catch (e) {
     showToast('Delete failed: ' + e.message, 'error');
+  }
+}
+
+function setupDragToReorder() {
+  const tbody = document.getElementById('services-table-body');
+
+  tbody.addEventListener('dragstart', e => {
+    if (!e.target.closest('.drag-handle')) {
+      e.preventDefault();
+      return;
+    }
+    const row = e.target.closest('tr[data-id]');
+    if (!row) return;
+    _dragSrcId = row.dataset.id;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => row.classList.add('dragging'), 0);
+  });
+
+  tbody.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const row = e.target.closest('tr[data-id]');
+    if (!row || row.dataset.id === _dragSrcId) return;
+    if (_dragOverRow && _dragOverRow !== row) _dragOverRow.classList.remove('drag-over');
+    row.classList.add('drag-over');
+    _dragOverRow = row;
+  });
+
+  tbody.addEventListener('dragleave', e => {
+    const row = e.target.closest('tr[data-id]');
+    if (row && row === _dragOverRow && !row.contains(e.relatedTarget)) {
+      row.classList.remove('drag-over');
+      _dragOverRow = null;
+    }
+  });
+
+  tbody.addEventListener('drop', e => {
+    e.preventDefault();
+    const row = e.target.closest('tr[data-id]');
+    if (_dragOverRow) { _dragOverRow.classList.remove('drag-over'); _dragOverRow = null; }
+    if (!row || !_dragSrcId || row.dataset.id === _dragSrcId) return;
+
+    const srcIdx = _services.findIndex(s => s.id === _dragSrcId);
+    const tgtIdx = _services.findIndex(s => s.id === row.dataset.id);
+    if (srcIdx === -1 || tgtIdx === -1) return;
+
+    const [item] = _services.splice(srcIdx, 1);
+    _services.splice(tgtIdx, 0, item);
+
+    renderServicesTable(_services);
+    saveOrder(_services);
+  });
+
+  tbody.addEventListener('dragend', e => {
+    const row = e.target.closest('tr[data-id]');
+    if (row) row.classList.remove('dragging');
+    if (_dragOverRow) { _dragOverRow.classList.remove('drag-over'); _dragOverRow = null; }
+    _dragSrcId = null;
+  });
+}
+
+async function saveOrder(services) {
+  try {
+    await Promise.all(services.map((svc, idx) => {
+      const fd = new FormData();
+      fd.append('order', idx);
+      return apiFetch(`/api/admin/services/${svc.id}`, { method: 'PUT', body: fd });
+    }));
+  } catch (e) {
+    showToast('Failed to save order: ' + e.message, 'error');
+    loadAdminServices();
   }
 }
 

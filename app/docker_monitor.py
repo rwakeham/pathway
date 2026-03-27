@@ -39,7 +39,7 @@ def _container_status(container) -> str:
     try:
         status = container.status  # running, exited, paused, restarting, etc.
         if status == "running":
-            return "running"
+            return "healthy"
         elif status in ("exited", "dead"):
             return "stopped"
         else:
