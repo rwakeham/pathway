@@ -145,6 +145,7 @@ let _services = [];
 let _editingId = null;
 let _dragSrcId = null;
 let _dragOverRow = null;
+let _dragAllowed = false;
 
 async function initAdmin() {
   const statusRes = await apiFetch('/api/auth/status');
@@ -322,8 +323,12 @@ async function deleteService(id, name) {
 function setupDragToReorder() {
   const tbody = document.getElementById('services-table-body');
 
+  tbody.addEventListener('mousedown', e => {
+    _dragAllowed = !!e.target.closest('.drag-handle');
+  });
+
   tbody.addEventListener('dragstart', e => {
-    if (!e.target.closest('.drag-handle')) {
+    if (!_dragAllowed) {
       e.preventDefault();
       return;
     }
