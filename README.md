@@ -33,6 +33,8 @@ The LAN IP is saved to `.env` so subsequent starts pick it up automatically. To 
 | Rebuild after code changes | `docker compose up -d --build` |
 | Deploy (merge branch → main + rebuild) | `./deploy.sh` |
 
+`deploy.sh` merges the current branch into `main`, pushes, then runs `docker compose up --build -d` — use it when you want to ship a feature branch in one step.
+
 The compose file sets `restart: unless-stopped`, so Pathway will start automatically when Docker starts. To ensure Docker itself starts on boot:
 
 ```bash
@@ -113,3 +115,5 @@ Navigate to `/admin`. Features:
 - Change the admin password
 
 Status labels are normalised across both sources: auto-detected containers show **healthy** / **stopped** to match HTTP health check terminology.
+
+The admin panel is mobile-responsive — URL, Source, and Health columns are hidden on narrow screens so the service name, enabled toggle, and edit/delete buttons remain accessible without horizontal scrolling.
