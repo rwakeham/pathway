@@ -31,6 +31,7 @@ The LAN IP is saved to `.env` so subsequent starts pick it up automatically. To 
 | Restart | `docker compose restart pathway` |
 | View logs | `docker compose logs -f pathway` |
 | Rebuild after code changes | `docker compose up -d --build` |
+| Deploy (merge branch → main + rebuild) | `./deploy.sh` |
 
 The compose file sets `restart: unless-stopped`, so Pathway will start automatically when Docker starts. To ensure Docker itself starts on boot:
 
@@ -107,6 +108,8 @@ Navigate to `/admin`. Features:
 - Add services manually with a name, URL, description, icon, and health check settings
 - Edit or delete any service (auto-detected or manual)
 - Toggle services on/off without deleting them
-- Drag to reorder the dashboard grid
+- Drag the grip handle on any row to reorder the dashboard grid
 - Trigger an immediate Docker rescan
 - Change the admin password
+
+Status labels are normalised across both sources: auto-detected containers show **healthy** / **stopped** to match HTTP health check terminology.
